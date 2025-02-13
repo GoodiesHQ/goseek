@@ -1,0 +1,10 @@
+services:
+  goseek:
+    image: goodieshq/goseek:latest
+    container_name: goseek
+    restart: unless-stopped
+    volumes:
+      - ./config.yml:/app/config.yml
+      - ./root:/app/root
+    ports:
+      - 3000:80

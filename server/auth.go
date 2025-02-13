@@ -1,29 +1,50 @@
 package server
 
-import "slices"
+import (
+	"slices"
+	"sync"
 
-type AuthChecker interface {
-	CheckBasic(username, password string) bool
-	CheckApiKey(apikey string) bool
+	"github.com/goodieshq/goseek/utils"
+)
+
+type ApiKeyChecker interface {
+	IsValidApiKey(apikey string) bool
+	UpdateApiKeys(apikeys []string)
+	AddApiKey(apikeys ...string)
+	DelApiKey(apikeys ...string)
 }
 
-type AuthCheck struct {
-	credentials map[string]string
-	apikeys     []string
+type ApiKeyCheckStatic struct {
+	mu      sync.RWMutex
+	apikeys []string
 }
 
-func NewAuthCheck(credentials map[string]string, apikeys []string) *AuthCheck {
-	return &AuthCheck{
-		credentials: credentials,
-		apikeys:     apikeys,
+func NewApiKeyCheckStatic(apikeys []string) *ApiKeyCheckStatic {
+	return &ApiKeyCheckStatic{
+		apikeys: apikeys,
 	}
 }
 
-func (authcheck *AuthCheck) CheckBasic(username, password string) bool {
-	pw, found := authcheck.credentials[username]
-	return found && password == pw
+func (apikeyCheck *ApiKeyCheckStatic) AddApiKey(apikeys ...string) {
+	apikeyCheck.mu.Lock()
+	defer apikeyCheck.mu.Unlock()
+	apikeyCheck.apikeys = append(apikeyCheck.apikeys, apikeys...)
 }
 
-func (authcheck *AuthCheck) CheckApiKey(apikey string) bool {
-	return slices.Contains(authcheck.apikeys, apikey)
+func (apikeyCheck *ApiKeyCheckStatic) DelApiKey(apikeys ...string) {
+	apikeyCheck.mu.Lock()
+	defer apikeyCheck.mu.Unlock()
+	apikeyCheck.apikeys = utils.RemoveAll(apikeyCheck.apikeys, apikeys...)
+}
+
+func (apikeyCheck *ApiKeyCheckStatic) UpdateApiKeys(apikeys []string) {
+	apikeyCheck.mu.Lock()
+	defer apikeyCheck.mu.Unlock()
+	apikeyCheck.apikeys = apikeys
+}
+
+func (apikeyCheck *ApiKeyCheckStatic) IsValidApiKey(apikey string) bool {
+	apikeyCheck.mu.RLock()
+	defer apikeyCheck.mu.RUnlock()
+	return slices.Contains(apikeyCheck.apikeys, apikey)
 }
