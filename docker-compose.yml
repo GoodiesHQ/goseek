@@ -7,6 +7,15 @@ services:
       GOSEEK_CONFIG_PATH: /app/config.yml
     volumes:
       - ./config.yml:/app/config.yml
-      - ./root:/app/root
+      - ./root:/app/root:ro
     ports:
       - 3000:80
+  goseek_sftp:
+    image: atmoz/sftp:latest
+    container_name: goseek_sftp
+    restart: unless-stopped
+    ports:
+      - "2222:22"
+    volumes:
+      - ./root:/home/sftpuser
+    command: sftpusername:sftppassword:1000
