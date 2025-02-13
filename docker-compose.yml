@@ -3,6 +3,8 @@ services:
     image: goodieshq/goseek:latest
     container_name: goseek
     restart: unless-stopped
+    environment:
+      GOSEEK_CONFIG_PATH: /app/config.yml
     volumes:
       - ./config.yml:/app/config.yml
       - ./root:/app/root
